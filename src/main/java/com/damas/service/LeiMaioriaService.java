@@ -53,9 +53,113 @@ public class LeiMaioriaService {
     }
 
     private int calcularCapturaDama(
-        Tabuleiro tabuleiro,
-        int linha,
-        int coluna)
+            Tabuleiro tabuleiro,
+            int linha,
+            int coluna) {
+
+        int[][] matriz = tabuleiro.getTabuleiro();
+
+        int peca = matriz[linha][coluna];
+
+        int maior = 0;
+
+        int[][] direcoes = {
+                { -1, -1 },
+                { -1, 1 },
+                { 1, -1 },
+                { 1, 1 }
+        };
+
+        for (int[] dir : direcoes) {
+
+            int linhaAtual = linha + dir[0];
+            int colunaAtual = coluna + dir[1];
+
+            boolean encontrouInimigo = false;
+
+            int linhaInimigo = -1;
+            int colunaInimigo = -1;
+
+            while (linhaAtual >= 0 &&
+                    linhaAtual < 8 &&
+                    colunaAtual >= 0 &&
+                    colunaAtual < 8) {
+
+                int valor = matriz[linhaAtual][colunaAtual];
+
+                // peça aliada bloqueia
+                if (peca == 3 &&
+                        (valor == 1 || valor == 3)) {
+
+                    break;
+                }
+
+                if (peca == 4 &&
+                        (valor == 2 || valor == 4)) {
+
+                    break;
+                }
+
+                // encontrou inimigo
+                boolean inimigo = false;
+
+                if (peca == 3) {
+
+                    inimigo = valor == 2 ||
+                            valor == 4;
+                }
+
+                if (peca == 4) {
+
+                    inimigo = valor == 1 ||
+                            valor == 3;
+                }
+
+                if (inimigo) {
+
+                    // segundo inimigo na mesma diagonal
+                    if (encontrouInimigo) {
+
+                        break;
+                    }
+
+                    encontrouInimigo = true;
+
+                    linhaInimigo = linhaAtual;
+                    colunaInimigo = colunaAtual;
+                }
+
+                // casa vazia depois do inimigo
+                if (valor == 0 &&
+                        encontrouInimigo) {
+
+                    Tabuleiro copia = simularCaptura(
+                            tabuleiro,
+                            linha,
+                            coluna,
+                            linhaAtual,
+                            colunaAtual,
+                            linhaInimigo,
+                            colunaInimigo);
+
+                    int sequencia = 1 +
+                            calcularCapturaDama(
+                                    copia,
+                                    linhaAtual,
+                                    colunaAtual);
+
+                    maior = Math.max(
+                            maior,
+                            sequencia);
+                }
+
+                linhaAtual += dir[0];
+                colunaAtual += dir[1];
+            }
+        }
+
+        return maior;
+    }
 
     public int calcularMaiorSequenciaCaptura(
             Tabuleiro tabuleiro,

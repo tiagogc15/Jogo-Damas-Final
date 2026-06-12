@@ -138,19 +138,8 @@ public class MovimentoService {
         // existe captura no tabuleiro
         if (existeCaptura && !capturaEmSequencia) {
 
-            System.out.println(
-                    "capturasDaPeca = "
-                            + capturasDaPeca);
-
-            System.out.println(
-                    "maiorCaptura = "
-                            + maiorCaptura);
-
             // existe peça melhor para capturar
             if (capturasDaPeca < maiorCaptura) {
-
-                System.out.println(
-                        "REJEITADO PELA LEI DA MAIORIA");
 
                 return false;
             }
