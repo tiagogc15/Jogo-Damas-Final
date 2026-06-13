@@ -177,54 +177,42 @@ async function reiniciarJogo() {
 // MOSTRAR MOVIMENTOS
 // =====================================================
 
-function mostrarMovimentosPossiveis(
+async function mostrarMovimentosPossiveis(
     linha,
-    coluna,
-    tabuleiro) {
+    coluna) {
 
     limparMovimentos();
 
     movimentosPossiveis = [];
 
-    for (let destinoLinha = 0;
-        destinoLinha < 8;
-        destinoLinha++) {
+    const resposta =
+        await fetch(
+            `/jogo/movimentos?linha=${linha}&coluna=${coluna}`);
 
-        for (let destinoColuna = 0;
-            destinoColuna < 8;
-            destinoColuna++) {
+    const movimentos =
+        await resposta.json();
 
-            const diferenca =
-                Math.abs(
-                    destinoLinha - linha);
+    movimentos.forEach(movimento => {
 
-            // movimento ou captura
-            if (diferenca >= 1 &&
-                diferenca <= 7) {
+        const destinoLinha =
+            movimento[0];
 
-                movimentosPossiveis.push({
-                    linha: destinoLinha,
-                    coluna: destinoColuna
-                });
+        const destinoColuna =
+            movimento[1];
 
-                const casa =
-                    document.querySelectorAll(".casa")
-                    [destinoLinha * 8 + destinoColuna];
+        movimentosPossiveis.push({
 
-                // captura
-                if (diferenca >= 2) {
+            linha: destinoLinha,
+            coluna: destinoColuna
+        });
 
-                    casa.classList
-                        .add("captura-possivel");
+        const casa =
+            document.querySelectorAll(".casa")
+            [destinoLinha * 8 + destinoColuna];
 
-                } else {
-
-                    casa.classList
-                        .add("movimento-possivel");
-                }
-            }
-        }
-    }
+        casa.classList
+            .add("movimento-possivel");
+    });
 }
 
 // =====================================================
@@ -280,6 +268,9 @@ async function clicarCasa(
 
         console.log("Peça selecionada");
 
+        await mostrarMovimentosPossiveis(
+            linha,
+            coluna);
 
         return;
     }
@@ -331,6 +322,8 @@ async function clicarCasa(
             origemColuna = null;
             casaSelecionada = null;
 
+            await carregarTabuleiro();
+
         } else {
 
             origemLinha =
@@ -339,12 +332,19 @@ async function clicarCasa(
             origemColuna =
                 capturaObrigatoria[1];
 
+            await carregarTabuleiro();
+
             casaSelecionada =
                 document.querySelectorAll(".casa")
                 [origemLinha * 8 + origemColuna];
-        }
 
-        await carregarTabuleiro();
+            casaSelecionada.classList
+                .add("selecionada");
+
+            await mostrarMovimentosPossiveis(
+                origemLinha,
+                origemColuna);
+        }
     }
 }
 

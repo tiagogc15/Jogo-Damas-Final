@@ -317,4 +317,59 @@ public class LeiMaioriaService {
 
         return capturas == maior;
     }
+
+    public boolean mantemSequenciaMaxima(
+            Tabuleiro tabuleiro,
+            int origemLinha,
+            int origemColuna,
+            int destinoLinha,
+            int destinoColuna,
+            int linhaCapturada,
+            int colunaCapturada) {
+
+        Tabuleiro copia = simularCaptura(
+                tabuleiro,
+                origemLinha,
+                origemColuna,
+                destinoLinha,
+                destinoColuna,
+                linhaCapturada,
+                colunaCapturada);
+
+        int restante = calcularMaiorSequenciaCaptura(
+                copia,
+                destinoLinha,
+                destinoColuna);
+
+        int atual = calcularMaiorSequenciaCaptura(
+                tabuleiro,
+                origemLinha,
+                origemColuna);
+
+        return restante == (atual - 1);
+    }
+
+    public int capturasRestantesAposJogada(
+            Tabuleiro tabuleiro,
+            int origemLinha,
+            int origemColuna,
+            int destinoLinha,
+            int destinoColuna,
+            int linhaCapturada,
+            int colunaCapturada) {
+
+        Tabuleiro copia = simularCaptura(
+                tabuleiro,
+                origemLinha,
+                origemColuna,
+                destinoLinha,
+                destinoColuna,
+                linhaCapturada,
+                colunaCapturada);
+
+        return calcularMaiorSequenciaCaptura(
+                copia,
+                destinoLinha,
+                destinoColuna);
+    }
 }

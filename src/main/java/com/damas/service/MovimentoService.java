@@ -307,7 +307,22 @@ public class MovimentoService {
                 return false;
             }
 
-            return true;
+            // existe captura obrigatória no tabuleiro
+            if (existeCaptura) {
+
+                System.out.println(
+                        "DAMA VALIDADA -> inimigos = "
+                                + inimigos);
+
+                return inimigos == 1;
+            }
+
+            // sem captura obrigatória
+            System.out.println(
+                    "DAMA VALIDADA -> inimigos = "
+                            + inimigos);
+
+            return inimigos == 0 || inimigos == 1;
         }
 
         return true;

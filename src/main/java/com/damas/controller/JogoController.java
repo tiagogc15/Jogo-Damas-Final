@@ -7,6 +7,7 @@ import com.damas.service.MovimentoService;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.damas.service.LeiMaioriaService;
 
 @RestController
 @RequestMapping("/jogo")
@@ -17,6 +18,9 @@ public class JogoController {
 
     @Autowired
     private MovimentoService movimentoService;
+
+    @Autowired
+    private LeiMaioriaService leiMaioriaService;
 
     // =====================================================
     // TABULEIRO
@@ -73,29 +77,6 @@ public class JogoController {
 
         Tabuleiro tabuleiro = jogoService.getTabuleiro();
 
-        System.out.println("================================");
-        System.out.println("JOGADA RECEBIDA PELO CONTROLLER");
-
-        System.out.println(
-                "Origem: "
-                        + movimento.getOrigemLinha()
-                        + ","
-                        + movimento.getOrigemColuna());
-
-        System.out.println(
-                "Destino: "
-                        + movimento.getDestinoLinha()
-                        + ","
-                        + movimento.getDestinoColuna());
-
-        System.out.println(
-                "Captura obrigatoria: "
-                        + jogoService.getLinhaCapturaObrigatoria()
-                        + ","
-                        + jogoService.getColunaCapturaObrigatoria());
-
-        System.out.println("================================");
-
         // =====================================================
         // CAPTURA EM SEQUÊNCIA OBRIGATÓRIA
         // =====================================================
@@ -110,21 +91,6 @@ public class JogoController {
             }
         }
 
-        System.out.println("================================");
-        System.out.println("JOGADA DO USUARIO");
-        System.out.println(
-                "Origem: "
-                        + movimento.getOrigemLinha()
-                        + ","
-                        + movimento.getOrigemColuna());
-
-        System.out.println(
-                "Destino: "
-                        + movimento.getDestinoLinha()
-                        + ","
-                        + movimento.getDestinoColuna());
-        System.out.println("================================");
-
         boolean capturaEmSequencia = jogoService.getLinhaCapturaObrigatoria() != null;
 
         boolean valido = movimentoService.movimentoValido(
@@ -137,9 +103,6 @@ public class JogoController {
                 capturaEmSequencia);
 
         if (!valido) {
-
-            System.out.println(
-                    "MOVIMENTO REJEITADO");
 
             return tabuleiro.getTabuleiro();
         }
@@ -207,6 +170,64 @@ public class JogoController {
                 jogoService.getLinhaCapturaObrigatoria(),
                 jogoService.getColunaCapturaObrigatoria()
         };
+    }
+
+    // =====================================================
+    // MOVIMENTOS POSSÍVEIS
+    // =====================================================
+
+    @GetMapping("/movimentos")
+    public int[][] movimentos(
+            @RequestParam int linha,
+            @RequestParam int coluna) {
+
+        Tabuleiro tabuleiro = jogoService.getTabuleiro();
+
+        int[][] movimentos = new int[64][2];
+
+        int quantidade = 0;
+
+        boolean capturaEmSequencia = jogoService.getLinhaCapturaObrigatoria() != null;
+
+        for (int destinoLinha = 0; destinoLinha < 8; destinoLinha++) {
+
+            for (int destinoColuna = 0; destinoColuna < 8; destinoColuna++) {
+
+                boolean valido = movimentoService.movimentoValido(
+                        tabuleiro,
+                        linha,
+                        coluna,
+                        destinoLinha,
+                        destinoColuna,
+                        jogoService.getJogadorAtual(),
+                        capturaEmSequencia);
+
+                if (valido) {
+
+                    int peca = tabuleiro.getTabuleiro()[linha][coluna];
+
+                    if (peca == 3 || peca == 4) {
+
+                    }
+
+                    movimentos[quantidade][0] = destinoLinha;
+                    movimentos[quantidade][1] = destinoColuna;
+
+                    quantidade++;
+                }
+            }
+        }
+
+        int[][] resultado = new int[quantidade][2];
+
+        for (int i = 0; i < quantidade; i++) {
+
+            resultado[i][0] = movimentos[i][0];
+
+            resultado[i][1] = movimentos[i][1];
+        }
+
+        return resultado;
     }
 
     // =====================================================
