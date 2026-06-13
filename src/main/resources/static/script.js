@@ -144,12 +144,40 @@ async function carregarVitoria() {
     const texto =
         await resposta.text();
 
-    document.getElementById("vitoria")
-        .innerText = texto;
+    const elementoVitoria =
+        document.getElementById("vitoria");
+
+    elementoVitoria.innerText = texto;
 
     if (texto !== "Partida em andamento") {
 
         jogoEncerrado = true;
+
+        elementoVitoria.style.color =
+            "#28a745";
+
+        elementoVitoria.style.fontSize =
+            "40px";
+
+        elementoVitoria.style.fontWeight =
+            "bold";
+
+        elementoVitoria.style.textAlign =
+            "center";
+
+        elementoVitoria.style.marginTop =
+            "20px";
+
+    } else {
+
+        elementoVitoria.style.color =
+            "black";
+
+        elementoVitoria.style.fontSize =
+            "24px";
+
+        elementoVitoria.style.fontWeight =
+            "normal";
     }
 }
 

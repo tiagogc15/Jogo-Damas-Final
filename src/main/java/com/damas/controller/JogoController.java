@@ -7,7 +7,6 @@ import com.damas.service.MovimentoService;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.damas.service.LeiMaioriaService;
 
 @RestController
 @RequestMapping("/jogo")
@@ -18,9 +17,6 @@ public class JogoController {
 
     @Autowired
     private MovimentoService movimentoService;
-
-    @Autowired
-    private LeiMaioriaService leiMaioriaService;
 
     // =====================================================
     // TABULEIRO
