@@ -261,39 +261,28 @@ function limparMovimentos() {
 // CLIQUE NAS CASAS
 // =====================================================
 
-async function clicarCasa(
-    linha,
-    coluna,
-    tabuleiro) {
+async function clicarCasa(linha, coluna, tabuleiro) {
 
     if (jogoEncerrado) {
-
         return;
     }
 
-    const valor =
-        tabuleiro[linha][coluna];
+    const valor = tabuleiro[linha][coluna];
 
     // =====================================================
     // SELECIONAR PEÇA
     // =====================================================
 
-    if (origemLinha === null &&
-        valor !== 0) {
-
+    if (origemLinha === null && valor !== 0) {
         origemLinha = linha;
         origemColuna = coluna;
 
-        casaSelecionada =
-            document.querySelectorAll(".casa")
-            [linha * 8 + coluna];
-
-        casaSelecionada.classList
-            .add("selecionada");
+        casaSelecionada = document.querySelectorAll(".casa")[linha * 8 + coluna];
+        casaSelecionada.classList.add("selecionada");
 
         console.log("Peça selecionada");
 
-        // NOVO: Chama a função para acender o tabuleiro!
+        // Chama a função para acender o tabuleiro!
         mostrarMovimentosPossiveis(linha, coluna);
 
         return;
@@ -306,63 +295,46 @@ async function clicarCasa(
     if (origemLinha !== null) {
 
         await fetch("/jogo/mover", {
-
             method: "POST",
-
             headers: {
-                "Content-Type":
-                    "application/json"
+                "Content-Type": "application/json"
             },
-
             body: JSON.stringify({
-
-                origemLinha:
-                    origemLinha,
-
-                origemColuna:
-                    origemColuna,
-
-                destinoLinha:
-                    linha,
-
-                destinoColuna:
-                    coluna
+                origemLinha: origemLinha,
+                origemColuna: origemColuna,
+                destinoLinha: linha,
+                destinoColuna: coluna
             })
         });
 
-        // remover destaque
-        if (casaSelecionada) {
-
-            casaSelecionada.classList
-                .remove("selecionada");
-        }
-
-        // NOVO: Limpa as cores verde e vermelha depois que a peça se move
+        // Limpa as cores verde e vermelha da jogada anterior
         limparMovimentos();
 
-        const capturaObrigatoria =
-            await obterCapturaObrigatoria();
+        // Pergunta ao Java se a peça precisa continuar comendo
+        const capturaObrigatoria = await obterCapturaObrigatoria();
 
+        // 🔴 ALTERAÇÃO AQUI: Recarregamos o tabuleiro PRIMEIRO
+        // Isso atualiza as peças na tela antes de tentarmos pintá-las novamente
+        await carregarTabuleiro();
+
+        // Se o Java disse que NÃO tem captura obrigatória (-1)
         if (capturaObrigatoria[0] === -1) {
-
             origemLinha = null;
             origemColuna = null;
             casaSelecionada = null;
 
         } else {
+            // Se o Java disse que TEM captura obrigatória, mantemos a peça selecionada!
+            origemLinha = capturaObrigatoria[0];
+            origemColuna = capturaObrigatoria[1];
 
-            origemLinha =
-                capturaObrigatoria[0];
+            // Como recarregamos o tabuleiro, precisamos pegar a "nova" div da casa no HTML
+            casaSelecionada = document.querySelectorAll(".casa")[origemLinha * 8 + origemColuna];
+            casaSelecionada.classList.add("selecionada");
 
-            origemColuna =
-                capturaObrigatoria[1];
-
-            casaSelecionada =
-                document.querySelectorAll(".casa")
-                [origemLinha * 8 + origemColuna];
+            // 🔴 O SEGREDO: Chamamos a função de mostrar movimentos novamente para o combo!
+            mostrarMovimentosPossiveis(origemLinha, origemColuna);
         }
-
-        await carregarTabuleiro();
     }
 }
 

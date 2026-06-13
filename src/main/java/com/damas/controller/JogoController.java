@@ -2,6 +2,7 @@ package com.damas.controller;
 
 import com.damas.dto.MovimentoDTO;
 import com.damas.model.Tabuleiro;
+import com.damas.model.TabuleiroMemento; // <-- IMPORT ADICIONADO AQUI
 import com.damas.service.HistoricoService;
 import com.damas.service.JogoService;
 import com.damas.service.MovimentoService;
@@ -28,9 +29,7 @@ public class JogoController {
 
     @GetMapping("/tabuleiro")
     public int[][] tabuleiro() {
-
         Tabuleiro tabuleiro = jogoService.getTabuleiro();
-
         return tabuleiro.getTabuleiro();
     }
 
@@ -40,12 +39,9 @@ public class JogoController {
 
     @GetMapping("/turno")
     public String turno() {
-
         if (jogoService.getJogadorAtual() == 1) {
-
             return "Jogador Vermelho";
         }
-
         return "Jogador Preto";
     }
 
@@ -55,15 +51,12 @@ public class JogoController {
 
     @GetMapping("/vitoria")
     public String vitoria() {
-
         String vencedor = jogoService.verificarVitoria(
                 jogoService.getTabuleiro());
 
         if (vencedor == null) {
-
             return "Partida em andamento";
         }
-
         return vencedor;
     }
 
@@ -79,25 +72,9 @@ public class JogoController {
 
         System.out.println("================================");
         System.out.println("JOGADA RECEBIDA PELO CONTROLLER");
-
-        System.out.println(
-                "Origem: "
-                        + movimento.getOrigemLinha()
-                        + ","
-                        + movimento.getOrigemColuna());
-
-        System.out.println(
-                "Destino: "
-                        + movimento.getDestinoLinha()
-                        + ","
-                        + movimento.getDestinoColuna());
-
-        System.out.println(
-                "Captura obrigatoria: "
-                        + jogoService.getLinhaCapturaObrigatoria()
-                        + ","
-                        + jogoService.getColunaCapturaObrigatoria());
-
+        System.out.println("Origem: " + movimento.getOrigemLinha() + "," + movimento.getOrigemColuna());
+        System.out.println("Destino: " + movimento.getDestinoLinha() + "," + movimento.getDestinoColuna());
+        System.out.println("Captura obrigatoria: " + jogoService.getLinhaCapturaObrigatoria() + "," + jogoService.getColunaCapturaObrigatoria());
         System.out.println("================================");
 
         // =====================================================
@@ -105,28 +82,16 @@ public class JogoController {
         // =====================================================
 
         if (jogoService.getLinhaCapturaObrigatoria() != null) {
-
             if (movimento.getOrigemLinha() != jogoService.getLinhaCapturaObrigatoria()
-                    ||
-                    movimento.getOrigemColuna() != jogoService.getColunaCapturaObrigatoria()) {
-
+                    || movimento.getOrigemColuna() != jogoService.getColunaCapturaObrigatoria()) {
                 return tabuleiro.getTabuleiro();
             }
         }
 
         System.out.println("================================");
         System.out.println("JOGADA DO USUARIO");
-        System.out.println(
-                "Origem: "
-                        + movimento.getOrigemLinha()
-                        + ","
-                        + movimento.getOrigemColuna());
-
-        System.out.println(
-                "Destino: "
-                        + movimento.getDestinoLinha()
-                        + ","
-                        + movimento.getDestinoColuna());
+        System.out.println("Origem: " + movimento.getOrigemLinha() + "," + movimento.getOrigemColuna());
+        System.out.println("Destino: " + movimento.getDestinoLinha() + "," + movimento.getDestinoColuna());
         System.out.println("================================");
 
         boolean capturaEmSequencia = jogoService.getLinhaCapturaObrigatoria() != null;
@@ -141,14 +106,17 @@ public class JogoController {
                 capturaEmSequencia);
 
         if (!valido) {
-
-            System.out.println(
-                    "MOVIMENTO REJEITADO");
-
+            System.out.println("MOVIMENTO REJEITADO");
             return tabuleiro.getTabuleiro();
         }
 
-        historicoService.salvarEstado(tabuleiro);
+        // 🔴 NOVA CHAMADA: Salva a foto completa (Matriz + Turno + Captura)
+        historicoService.salvarEstado(
+                tabuleiro,
+                jogoService.getJogadorAtual(),
+                jogoService.getLinhaCapturaObrigatoria(),
+                jogoService.getColunaCapturaObrigatoria()
+        );
 
         boolean capturou = movimentoService.capturarPeca(
                 tabuleiro,
@@ -164,21 +132,18 @@ public class JogoController {
                 movimento.getDestinoLinha(),
                 movimento.getDestinoColuna());
 
-        movimentoService.verificarDama(
-                tabuleiro);
+        movimentoService.verificarDama(tabuleiro);
 
         // captura em sequência
         boolean continuar = false;
 
         if (capturou) {
-
             continuar = movimentoService.podeCapturarNovamente(
                     tabuleiro,
                     movimento.getDestinoLinha(),
                     movimento.getDestinoColuna());
 
             if (continuar) {
-
                 jogoService.definirCapturaObrigatoria(
                         movimento.getDestinoLinha(),
                         movimento.getDestinoColuna());
@@ -186,9 +151,7 @@ public class JogoController {
         }
 
         if (!continuar) {
-
             jogoService.limparCapturaObrigatoria();
-
             jogoService.trocarTurno();
         }
 
@@ -197,15 +160,9 @@ public class JogoController {
 
     @GetMapping("/captura-obrigatoria")
     public int[] capturaObrigatoria() {
-
-        System.out.println(
-                "CAPTURA OBRIGATORIA -> "
-                        + jogoService.getLinhaCapturaObrigatoria()
-                        + ","
-                        + jogoService.getColunaCapturaObrigatoria());
+        System.out.println("CAPTURA OBRIGATORIA -> " + jogoService.getLinhaCapturaObrigatoria() + "," + jogoService.getColunaCapturaObrigatoria());
 
         if (jogoService.getLinhaCapturaObrigatoria() == null) {
-
             return new int[] { -1, -1 };
         }
 
@@ -219,17 +176,27 @@ public class JogoController {
     // DESFAZER JOGADA
     // =====================================================
 
+    // 🔴 ALTERADO: Agora restaura as informações do Memento usando a nova lógica
     @PostMapping("/desfazer")
     public int[][] desfazer() {
         Tabuleiro tabuleiro = jogoService.getTabuleiro();
 
-        // 1. Tenta restaurar a matriz do tabuleiro e guarda o resultado
-        boolean desfezComSucesso = historicoService.desfazer(tabuleiro);
+        // Tenta desfazer e pega a fotografia completa salva
+        TabuleiroMemento mementoRestaurado = historicoService.desfazer(tabuleiro);
 
-        // 2. SÓ altera as regras de turno se REALMENTE havia uma jogada para desfazer
-        if (desfezComSucesso) {
-            jogoService.trocarTurno();
-            jogoService.limparCapturaObrigatoria();
+        if (mementoRestaurado != null) {
+            // 1. Devolve o turno para quem estava jogando na hora da foto
+            jogoService.setJogadorAtual(mementoRestaurado.getJogadorAtual());
+
+            // 2. Se a pessoa estava no meio de um combo de capturas, devolve o estado do combo
+            if (mementoRestaurado.getLinhaCapturaObrigatoria() != null) {
+                jogoService.definirCapturaObrigatoria(
+                        mementoRestaurado.getLinhaCapturaObrigatoria(),
+                        mementoRestaurado.getColunaCapturaObrigatoria()
+                );
+            } else {
+                jogoService.limparCapturaObrigatoria();
+            }
             System.out.println("JOGADA DESFEITA COM SUCESSO");
         } else {
             System.out.println("NÃO HÁ JOGADAS PARA DESFAZER - TURNO MANTIDO");
@@ -239,7 +206,7 @@ public class JogoController {
     }
 
     // =====================================================
-    // VERIFICAR SE PODE DESFAZER (NOVO ENDPOINT)
+    // VERIFICAR SE PODE DESFAZER
     // =====================================================
     @GetMapping("/pode-desfazer")
     public boolean podeDesfazer() {
@@ -252,17 +219,14 @@ public class JogoController {
 
     @PostMapping("/reiniciar")
     public int[][] reiniciar() {
-
         jogoService.reiniciarJogo();
         historicoService.limpar(); // Evita que o usuário desfaça jogadas da partida anterior!
 
-        return jogoService
-                .getTabuleiro()
-                .getTabuleiro();
+        return jogoService.getTabuleiro().getTabuleiro();
     }
 
     // =====================================================
-    // MOVIMENTOS VÁLIDOS (NOVO ENDPOINT)
+    // MOVIMENTOS VÁLIDOS
     // =====================================================
 
     @GetMapping("/movimentos-validos")
@@ -275,7 +239,6 @@ public class JogoController {
         int jogadorAtual = jogoService.getJogadorAtual();
         boolean capturaEmSequencia = jogoService.getLinhaCapturaObrigatoria() != null;
 
-        // Testa todas as 64 casas do tabuleiro
         for (int dLinha = 0; dLinha < 8; dLinha++) {
             for (int dColuna = 0; dColuna < 8; dColuna++) {
 
@@ -283,7 +246,6 @@ public class JogoController {
                         tabuleiro, linha, coluna, dLinha, dColuna, jogadorAtual, capturaEmSequencia);
 
                 if (valido) {
-                    // Se o movimento for válido, adiciona as coordenadas na lista
                     validos.add(new int[]{dLinha, dColuna});
                 }
             }
